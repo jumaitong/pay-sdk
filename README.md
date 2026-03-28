@@ -86,6 +86,12 @@ $order = $client->pay()->query('ORD_202312_001');
 // $order['status'] => pending / paid / closed / refunded
 ```
 
+### 关闭订单
+
+```php
+$client->pay()->close('ORD_202312_001'); // 仅限待支付状态，成功返回空数组
+```
+
 ### 申请退款
 
 ```php
@@ -94,6 +100,15 @@ $refund = $client->refund()->create(
     refundAmount:   9900,
     reason:         '用户申请退款',
     tenantRefundNo: 'REF_202312_001', // 可选，用于幂等
+);
+```
+
+### 查询退款
+
+```php
+$refund = $client->refund()->query(
+    tenantOrderNo:  'ORD_202312_001',
+    tenantRefundNo: 'REF_202312_001', // 可选
 );
 ```
 
