@@ -17,6 +17,9 @@ use Jumaitong\Pay\HttpClient;
  */
 class PayApi
 {
+    private const VALID_CHANNELS  = ['alipay', 'wechat', 'unipay', 'douyin'];
+    private const VALID_PAY_TYPES = ['web', 'h5', 'app', 'mini', 'scan'];
+
     public function __construct(private readonly HttpClient $http) {}
 
     /**
@@ -45,6 +48,30 @@ class PayApi
         string $accountKey = 'default',
         int    $expireMinutes = 30,
     ): array {
+        if (!in_array($channel, self::VALID_CHANNELS, true)) {
+            throw new PayException(PayException::PARAMS_INVALID, "不支持的支付渠道: {$channel}，可选值: " . implode(', ', self::VALID_CHANNELS));
+        }
+
+        if (!in_array($payType, self::VALID_PAY_TYPES, true)) {
+            throw new PayException(PayException::PARAMS_INVALID, "不支持的支付方式: {$payType}，可选值: " . implode(', ', self::VALID_PAY_TYPES));
+        }
+
+        if ($amount <= 0) {
+            throw new PayException(PayException::AMOUNT_INVALID, "金额必须大于 0，当前值: {$amount}");
+        }
+
+        if ($subject === '') {
+            throw new PayException(PayException::PARAMS_INVALID, '商品标题不能为空');
+        }
+
+        if (strlen($tenantOrderNo) > 64) {
+            throw new PayException(PayException::PARAMS_INVALID, '业务订单号最长 64 字节，当前长度: ' . strlen($tenantOrderNo));
+        }
+
+        if ($expireMinutes < 1 || $expireMinutes > 1440) {
+            throw new PayException(PayException::PARAMS_INVALID, "有效期分钟数范围 1-1440，当前值: {$expireMinutes}");
+        }
+
         $params = [
             'channel'          => $channel,
             'pay_type'         => $payType,
@@ -81,9 +108,10 @@ class PayApi
      * 关闭订单（仅限待支付状态）
      *
      * @param  string $tenantOrderNo  业务侧订单号
-     * @return array
+     * @return array{}  关单成功返回空数组
      *
-     * @throws PayException
+     * @throws PayException ORDER_NOT_FOUND       订单不存在
+     * @throws PayException ORDER_STATUS_INVALID  订单状态不允许关闭
      */
     public function close(string $tenantOrderNo): array
     {

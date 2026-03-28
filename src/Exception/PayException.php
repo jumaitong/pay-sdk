@@ -40,13 +40,17 @@ class PayException extends \RuntimeException
     public const RESPONSE_INVALID     = -2;    // 响应格式错误
     public const NOTIFY_SIGN_INVALID  = -3;    // 通知签名验证失败
 
+    private readonly int $bizCode;
+
     public function __construct(int $bizCode, string $message = '')
     {
-        parent::__construct($message ?: "支付中心错误 [{$bizCode}]", $bizCode);
+        // 业务错误码存入独立属性，不复用 $code（PHP 内部保留字段，语义不同）
+        $this->bizCode = $bizCode;
+        parent::__construct($message ?: "支付中心错误 [{$bizCode}]");
     }
 
     public function getBizCode(): int
     {
-        return $this->getCode();
+        return $this->bizCode;
     }
 }

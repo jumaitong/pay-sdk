@@ -17,6 +17,15 @@ use Jumaitong\Pay\HttpClient;
  *   payload 中包含 timestamp、nonce、sign 字段
  *   验签时：去掉 sign → JSON 重新编码 → 生成期望签名 → 与 sign 比较
  *
+ * ⚠️ JSON 重组限制：验签时对原始 payload 执行 json_decode → 去 sign → json_encode，
+ *    此过程要求服务端通知 body 满足：
+ *    1. 所有字符串字段使用 UTF-8 原生字节（无 \u 转义），否则重组后字节不同导致签名不符
+ *    2. JSON key 顺序与 PHP json_decode 还原顺序一致（服务端需保证序列化顺序稳定）
+ *    如需彻底消除此限制，应与服务端协议升级为"sign 放 Header、body 原文验签"方案。
+ *
+ * 注意：此类仅使用 HttpClient::sign()，依赖完整 HttpClient 实例是当前设计的已知取舍，
+ *       可在引入签名接口后优化，但对当前无测试的内部 SDK 影响可接受。
+ *
  * 使用方式：通过 PayClient::notify() 获取实例
  *   $data = $client->notify()->verify($rawBody);
  */
@@ -36,9 +45,7 @@ class NotifyVerifier
      *     channel: string,
      *     amount: int,
      *     channel_trade_no: string,
-     *     paid_at: string,
-     *     timestamp: string,
-     *     nonce: string
+     *     paid_at: string
      * }
      *
      * @throws PayException NOTIFY_SIGN_INVALID 签名验证失败
@@ -60,10 +67,11 @@ class NotifyVerifier
             throw new PayException(PayException::NOTIFY_SIGN_INVALID, '通知缺少必要字段：sign / timestamp / nonce');
         }
 
-        // 去掉 sign 字段后，用相同 JSON 序列化选项重新编码（与服务端签名逻辑严格对称）
+        // 去掉 sign 字段后重新编码，与服务端签名逻辑对称（限制见类注释）
+        // JSON_THROW_ON_ERROR：编码失败直接抛出 JsonException，避免 false 流入签名串
         $dataToSign = $payload;
         unset($dataToSign['sign']);
-        $body = json_encode($dataToSign, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $body = json_encode($dataToSign, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
         $expectedSign = $this->http->sign($timestamp, $nonce, (string) $body);
 
@@ -81,6 +89,6 @@ class NotifyVerifier
      */
     public function success(): string
     {
-        return json_encode(['code' => 0, 'msg' => 'ok'], JSON_UNESCAPED_UNICODE);
+        return json_encode(['code' => 0, 'msg' => 'ok'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     }
 }

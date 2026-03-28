@@ -36,6 +36,10 @@ class RefundApi
         string  $reason = '',
         ?string $tenantRefundNo = null,
     ): array {
+        if ($refundAmount <= 0) {
+            throw new PayException(PayException::AMOUNT_INVALID, "退款金额必须大于 0，当前值: {$refundAmount}");
+        }
+
         $params = [
             'tenant_order_no' => $tenantOrderNo,
             'refund_amount'   => $refundAmount,

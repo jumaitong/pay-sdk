@@ -34,32 +34,37 @@ class HttpClient
      */
     public function post(string $path, array $data): array
     {
-        $body      = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        // JSON_THROW_ON_ERROR：编码失败直接抛出 JsonException，避免 false 流入签名串
+        $body      = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $timestamp = (string) time();
         $nonce     = bin2hex(random_bytes(16));
         $sign      = $this->sign($timestamp, $nonce, $body);
         $url       = rtrim($this->baseUrl, '/') . $path;
 
         $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL            => $url,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => $body,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CONNECTTIMEOUT => self::CONNECT_TIMEOUT,
-            CURLOPT_TIMEOUT        => self::READ_TIMEOUT,
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json; charset=utf-8',
-                'X-Api-Key: '   . $this->apiKey,
-                'X-Timestamp: ' . $timestamp,
-                'X-Nonce: '     . $nonce,
-                'X-Sign: '      . $sign,
-            ],
-        ]);
+        try {
+            curl_setopt_array($ch, [
+                CURLOPT_URL            => $url,
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => $body,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CONNECTTIMEOUT => self::CONNECT_TIMEOUT,
+                CURLOPT_TIMEOUT        => self::READ_TIMEOUT,
+                CURLOPT_HTTPHEADER     => [
+                    'Content-Type: application/json; charset=utf-8',
+                    'X-Api-Key: '   . $this->apiKey,
+                    'X-Timestamp: ' . $timestamp,
+                    'X-Nonce: '     . $nonce,
+                    'X-Sign: '      . $sign,
+                ],
+            ]);
 
-        $response = curl_exec($ch);
-        $curlErr  = curl_error($ch);
-        curl_close($ch);
+            $response = curl_exec($ch);
+            $curlErr  = curl_error($ch);
+        } finally {
+            // 常驻进程必须保证句柄释放，避免文件描述符泄露
+            curl_close($ch);
+        }
 
         if ($response === false || $curlErr !== '') {
             throw new PayException(PayException::HTTP_ERROR, "HTTP 请求失败: {$curlErr}");
@@ -87,15 +92,5 @@ class HttpClient
     {
         $signStr = $this->apiKey . "\n" . $timestamp . "\n" . $nonce . "\n" . hash('sha256', $body);
         return hash_hmac('sha256', $signStr, $this->apiSecret);
-    }
-
-    public function getApiKey(): string
-    {
-        return $this->apiKey;
-    }
-
-    public function getApiSecret(): string
-    {
-        return $this->apiSecret;
     }
 }
