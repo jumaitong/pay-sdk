@@ -6,7 +6,7 @@ Jumaitong 支付中心 PHP SDK，供内部业务系统接入支付中心使用�
 
 - **包名**: `jumaitong/pay-sdk`
 - **命名空间**: `Jumaitong\Pay\`
-- **最低 PHP**: 8.1（代码使用了只读属性、枚举等 8.1+ 特性）
+- **最低 PHP**: 8.4
 - **外部依赖**: 仅 `ext-curl` 和 `ext-json`，零 Composer 第三方依赖
 
 ---

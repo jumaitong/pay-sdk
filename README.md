@@ -2,7 +2,7 @@
 
 Jumaitong 支付中心 PHP SDK，供内部业务系统接入使用。
 
-**要求**：PHP >= 8.1，启用 `curl` 和 `json` 扩展。
+**要求**：PHP >= 8.4，启用 `curl` 和 `json` 扩展。
 
 ---
 
