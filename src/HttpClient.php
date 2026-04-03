@@ -50,6 +50,8 @@ class HttpClient
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_CONNECTTIMEOUT => self::CONNECT_TIMEOUT,
                 CURLOPT_TIMEOUT        => self::READ_TIMEOUT,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
                 CURLOPT_HTTPHEADER     => [
                     'Content-Type: application/json; charset=utf-8',
                     'X-Api-Key: '   . $this->apiKey,
@@ -70,9 +72,15 @@ class HttpClient
             throw new PayException(PayException::HTTP_ERROR, "HTTP 请求失败: {$curlErr}");
         }
 
-        $result = json_decode((string) $response, true);
+        try {
+            $result = json_decode((string) $response, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            $preview = mb_substr((string) $response, 0, 100);
+            throw new PayException(PayException::RESPONSE_INVALID, "响应不是合法 JSON（前100字符）: {$preview}");
+        }
+
         if (!is_array($result)) {
-            throw new PayException(PayException::RESPONSE_INVALID, "响应格式错误: {$response}");
+            throw new PayException(PayException::RESPONSE_INVALID, '响应格式错误：顶层结构不是对象');
         }
 
         $code = (int) ($result['code'] ?? -1);

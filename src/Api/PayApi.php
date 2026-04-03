@@ -64,6 +64,10 @@ class PayApi
             throw new PayException(PayException::PARAMS_INVALID, '商品标题不能为空');
         }
 
+        if ($tenantOrderNo === '') {
+            throw new PayException(PayException::PARAMS_INVALID, '业务订单号不能为空');
+        }
+
         if (strlen($tenantOrderNo) > 64) {
             throw new PayException(PayException::PARAMS_INVALID, '业务订单号最长 64 字节，当前长度: ' . strlen($tenantOrderNo));
         }
@@ -82,7 +86,7 @@ class PayApi
             'expire_minutes'   => $expireMinutes,
         ];
 
-        if (!empty($extra)) {
+        if ($extra !== []) {
             $params['extra'] = $extra;
         }
 
@@ -99,6 +103,10 @@ class PayApi
      */
     public function query(string $tenantOrderNo): array
     {
+        if ($tenantOrderNo === '') {
+            throw new PayException(PayException::PARAMS_INVALID, '业务订单号不能为空');
+        }
+
         return $this->http->post('/api/v1/pay/query', [
             'tenant_order_no' => $tenantOrderNo,
         ]);
@@ -115,6 +123,10 @@ class PayApi
      */
     public function close(string $tenantOrderNo): array
     {
+        if ($tenantOrderNo === '') {
+            throw new PayException(PayException::PARAMS_INVALID, '业务订单号不能为空');
+        }
+
         return $this->http->post('/api/v1/pay/close', [
             'tenant_order_no' => $tenantOrderNo,
         ]);

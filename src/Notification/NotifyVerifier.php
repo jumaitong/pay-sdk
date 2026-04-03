@@ -53,10 +53,14 @@ class NotifyVerifier
      */
     public function verify(string $rawBody): array
     {
-        $payload = json_decode($rawBody, true);
+        try {
+            $payload = json_decode($rawBody, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new PayException(PayException::RESPONSE_INVALID, '通知格式错误：无法解析 JSON');
+        }
 
         if (!is_array($payload)) {
-            throw new PayException(PayException::RESPONSE_INVALID, '通知格式错误：无法解析 JSON');
+            throw new PayException(PayException::RESPONSE_INVALID, '通知格式错误：顶层结构不是对象');
         }
 
         $sign      = (string) ($payload['sign']      ?? '');
@@ -73,21 +77,29 @@ class NotifyVerifier
         unset($dataToSign['sign']);
         $body = json_encode($dataToSign, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
-        $expectedSign = $this->http->sign($timestamp, $nonce, (string) $body);
+        $expectedSign = $this->http->sign($timestamp, $nonce, $body);
 
         // hash_equals 防止时序攻击
         if (!hash_equals($expectedSign, $sign)) {
             throw new PayException(PayException::NOTIFY_SIGN_INVALID, '支付通知签名验证失败');
         }
 
-        unset($dataToSign['timestamp'], $dataToSign['nonce']);
-        return $dataToSign;
+        // 只返回约定字段，避免服务端未来新增字段无感知透传给业务层
+        return [
+            'event'            => (string) ($dataToSign['event']            ?? ''),
+            'order_no'         => (string) ($dataToSign['order_no']         ?? ''),
+            'tenant_order_no'  => (string) ($dataToSign['tenant_order_no']  ?? ''),
+            'channel'          => (string) ($dataToSign['channel']          ?? ''),
+            'amount'           => (int)    ($dataToSign['amount']           ?? 0),
+            'channel_trade_no' => (string) ($dataToSign['channel_trade_no'] ?? ''),
+            'paid_at'          => (string) ($dataToSign['paid_at']          ?? ''),
+        ];
     }
 
     /**
      * 验签成功后，返回标准"已支付"响应体（支付中心收到 HTTP 2xx 即停止重推）
      */
-    public function success(): string
+    public static function success(): string
     {
         return json_encode(['code' => 0, 'msg' => 'ok'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     }

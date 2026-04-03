@@ -40,6 +40,10 @@ class RefundApi
             throw new PayException(PayException::AMOUNT_INVALID, "退款金额必须大于 0，当前值: {$refundAmount}");
         }
 
+        if ($tenantOrderNo === '') {
+            throw new PayException(PayException::PARAMS_INVALID, '业务订单号不能为空');
+        }
+
         $params = [
             'tenant_order_no' => $tenantOrderNo,
             'refund_amount'   => $refundAmount,
@@ -68,6 +72,10 @@ class RefundApi
      */
     public function query(string $tenantOrderNo, ?string $tenantRefundNo = null): array
     {
+        if ($tenantOrderNo === '') {
+            throw new PayException(PayException::PARAMS_INVALID, '业务订单号不能为空');
+        }
+
         $params = ['tenant_order_no' => $tenantOrderNo];
 
         if ($tenantRefundNo !== null) {
