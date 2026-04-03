@@ -21,7 +21,11 @@ class HttpClient
         private readonly string $apiKey,
         private readonly string $apiSecret,
         private readonly string $baseUrl,
-    ) {}
+    ) {
+        if (!str_starts_with($baseUrl, 'https://')) {
+            throw new \InvalidArgumentException("baseUrl 必须使用 HTTPS，当前值: {$baseUrl}");
+        }
+    }
 
     /**
      * 发送 POST 请求（自动签名）

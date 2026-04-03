@@ -127,7 +127,7 @@ try {
 
     // 更新业务订单状态...
 
-    echo $client->notify()->success(); // 必须输出，否则支付中心会重复推送
+    echo \Jumaitong\Pay\Notification\NotifyVerifier::success(); // 必须输出，否则支付中心会重复推送
 } catch (PayException $e) {
     http_response_code(400);
 }
