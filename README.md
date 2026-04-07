@@ -81,35 +81,57 @@ try {
 
 ### 查询订单
 
+`tenantOrderNo` 和 `orderNo` 二选一传入：
+
 ```php
-$order = $client->pay()->query('ORD_202312_001');
-// $order['status'] => pending / paid / closed / refunded
+// 按业务订单号查询
+$order = $client->pay()->query(tenantOrderNo: 'ORD_202312_001');
+
+// 按支付中心流水号查询
+$order = $client->pay()->query(orderNo: '0001202602261030001234');
+
+// 强制查询第三方最新状态
+$order = $client->pay()->query(tenantOrderNo: 'ORD_202312_001', forceRemote: true);
 ```
 
 ### 关闭订单
 
+`tenantOrderNo` 和 `orderNo` 二选一传入：
+
 ```php
-$client->pay()->close('ORD_202312_001'); // 仅限待支付状态，成功返回空数组
+$client->pay()->close(tenantOrderNo: 'ORD_202312_001');
+// 或
+$client->pay()->close(orderNo: '0001202602261030001234');
 ```
 
 ### 申请退款
 
+`tenantOrderNo` 和 `orderNo` 二选一传入；`refundAmount` 传 0 或不传表示全额退款：
+
 ```php
+// 部分退款
 $refund = $client->refund()->create(
     tenantOrderNo:  'ORD_202312_001',
-    refundAmount:   9900,
-    reason:         '用户申请退款',
-    tenantRefundNo: 'REF_202312_001', // 可选，用于幂等
+    refundAmount:   5000,              // 50.00 元，不传或传 0 则全额退款
+    refundReason:   '用户申请退款',
+    tenantRefundNo: 'REF_202312_001',  // 可选，用于幂等
 );
+// $refund['out_refund_no'] 支付中心退款流水号
+
+// 全额退款
+$refund = $client->refund()->create(tenantOrderNo: 'ORD_202312_001');
 ```
 
 ### 查询退款
 
+`tenantRefundNo` 和 `outRefundNo` 二选一传入：
+
 ```php
-$refund = $client->refund()->query(
-    tenantOrderNo:  'ORD_202312_001',
-    tenantRefundNo: 'REF_202312_001', // 可选
-);
+// 按业务退款单号查询
+$refund = $client->refund()->query(tenantRefundNo: 'REF_202312_001');
+
+// 按支付中心退款流水号查询
+$refund = $client->refund()->query(outRefundNo: 'RF0001202602261040001234');
 ```
 
 ### 处理异步通知

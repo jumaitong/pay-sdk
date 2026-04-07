@@ -4,6 +4,22 @@
 
 ---
 
+## [1.1.0] - 2026-04-08
+
+### 修复
+
+- `PayApi::query()`：新增 `orderNo` 参数（与 `tenantOrderNo` 二选一），新增 `forceRemote` 参数
+- `PayApi::close()`：新增 `orderNo` 参数（与 `tenantOrderNo` 二选一）
+- `RefundApi::create()`：修复退款原因字段名（`reason` → `refund_reason`）；新增 `orderNo` 参数；`refundAmount` 允许传 0 表示全额退款
+- `RefundApi::query()`：修复查询参数错误（原 `tenant_order_no` 不在规范中），改为 `tenantRefundNo` / `outRefundNo` 二选一
+
+### 不兼容变更
+
+- `RefundApi::query()` 第一个参数由 `tenantOrderNo` 变更为 `tenantRefundNo`，使用命名参数调用的代码需同步修改
+- `RefundApi::create()` 参数 `reason` 重命名为 `refundReason`，使用命名参数调用的代码需同步修改
+
+---
+
 ## [1.0.0] - 2026-04-03
 
 首个正式版本。
