@@ -21,38 +21,44 @@ class RefundApi
     /**
      * 申请退款
      *
-     * @param  string      $tenantOrderNo   业务侧原支付订单号
-     * @param  int         $refundAmount    退款金额（分），不能超过可退金额
-     * @param  string      $reason          退款原因（可选）
+     * @param  string      $tenantOrderNo   业务侧原支付订单号（与 $orderNo 二选一）
+     * @param  string      $orderNo         支付中心流水号（与 $tenantOrderNo 二选一）
+     * @param  int         $refundAmount    退款金额（分），传 0 表示全额退款
+     * @param  string      $refundReason    退款原因（可选）
      * @param  string|null $tenantRefundNo  业务侧退款单号（可选，用于幂等）
      *
-     * @return array{refund_no: string, ...}
+     * @return array{out_refund_no: string, refund_amount: int, status: string}
      *
      * @throws PayException
      */
     public function create(
-        string  $tenantOrderNo,
-        int     $refundAmount,
-        string  $reason = '',
+        string  $tenantOrderNo = '',
+        string  $orderNo = '',
+        int     $refundAmount = 0,
+        string  $refundReason = '',
         ?string $tenantRefundNo = null,
     ): array {
-        if ($refundAmount <= 0) {
-            throw new PayException(PayException::AMOUNT_INVALID, "退款金额必须大于 0，当前值: {$refundAmount}");
+        if ($tenantOrderNo === '' && $orderNo === '') {
+            throw new PayException(PayException::PARAMS_INVALID, 'order_no 和 tenant_order_no 至少填写一个');
         }
 
-        if ($tenantOrderNo === '') {
-            throw new PayException(PayException::PARAMS_INVALID, '业务订单号不能为空');
+        if ($refundAmount < 0) {
+            throw new PayException(PayException::AMOUNT_INVALID, "退款金额不能为负数，当前值: {$refundAmount}");
         }
 
-        $params = [
-            'tenant_order_no' => $tenantOrderNo,
-            'refund_amount'   => $refundAmount,
-        ];
-
-        if ($reason !== '') {
-            $params['reason'] = $reason;
+        $params = [];
+        if ($tenantOrderNo !== '') {
+            $params['tenant_order_no'] = $tenantOrderNo;
         }
-
+        if ($orderNo !== '') {
+            $params['order_no'] = $orderNo;
+        }
+        if ($refundAmount > 0) {
+            $params['refund_amount'] = $refundAmount;
+        }
+        if ($refundReason !== '') {
+            $params['refund_reason'] = $refundReason;
+        }
         if ($tenantRefundNo !== null) {
             $params['tenant_refund_no'] = $tenantRefundNo;
         }
@@ -63,23 +69,25 @@ class RefundApi
     /**
      * 查询退款
      *
-     * @param  string      $tenantOrderNo   业务侧原支付订单号
-     * @param  string|null $tenantRefundNo  业务侧退款单号（可选）
+     * @param  string $tenantRefundNo  业务侧退款单号（与 $outRefundNo 二选一）
+     * @param  string $outRefundNo     支付中心退款流水号（与 $tenantRefundNo 二选一）
      *
      * @return array
      *
      * @throws PayException
      */
-    public function query(string $tenantOrderNo, ?string $tenantRefundNo = null): array
+    public function query(string $tenantRefundNo = '', string $outRefundNo = ''): array
     {
-        if ($tenantOrderNo === '') {
-            throw new PayException(PayException::PARAMS_INVALID, '业务订单号不能为空');
+        if ($tenantRefundNo === '' && $outRefundNo === '') {
+            throw new PayException(PayException::PARAMS_INVALID, 'out_refund_no 和 tenant_refund_no 至少填写一个');
         }
 
-        $params = ['tenant_order_no' => $tenantOrderNo];
-
-        if ($tenantRefundNo !== null) {
+        $params = [];
+        if ($tenantRefundNo !== '') {
             $params['tenant_refund_no'] = $tenantRefundNo;
+        }
+        if ($outRefundNo !== '') {
+            $params['out_refund_no'] = $outRefundNo;
         }
 
         return $this->http->post('/api/v1/pay/refund-query', $params);

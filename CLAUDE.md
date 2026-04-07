@@ -11,6 +11,22 @@ Jumaitong 支付中心 PHP SDK，供内部业务系统接入支付中心使用�
 
 ---
 
+## 接口规范获取
+
+后端接口规范存放在私有仓库，每次开发接口调用代码前，先执行以下步骤获取最新规范：
+
+1. 请求以下 URL 获取 openapi.yaml：
+   - URL: https://api.github.com/repos/jumaitong/pay/contents/openapi.yaml
+   - Header: Authorization: Bearer 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
+2. 响应 JSON 中的 content 字段是 base64 编码的文件内容，解码后即为 openapi.yaml 的完整内容
+3. 根据解码后的 openapi.yaml 内容编写接口调用代码，严格遵循其中定义的：
+   - 接口路径和请求方法
+   - 请求参数结构
+   - 响应数据结构
+   - 字段名称和类型
+
+---
+
 ## 目录结构
 
 ```

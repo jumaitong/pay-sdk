@@ -96,39 +96,57 @@ class PayApi
     /**
      * 查询订单
      *
-     * @param  string $tenantOrderNo  业务侧订单号
+     * @param  string $tenantOrderNo  业务侧订单号（与 $orderNo 二选一）
+     * @param  string $orderNo        支付中心流水号（与 $tenantOrderNo 二选一）
+     * @param  bool   $forceRemote    是否强制查询第三方最新状态
      * @return array{order_no: string, tenant_order_no: string, status: int, amount: int, ...}
      *
      * @throws PayException
      */
-    public function query(string $tenantOrderNo): array
+    public function query(string $tenantOrderNo = '', string $orderNo = '', bool $forceRemote = false): array
     {
-        if ($tenantOrderNo === '') {
-            throw new PayException(PayException::PARAMS_INVALID, '业务订单号不能为空');
+        if ($tenantOrderNo === '' && $orderNo === '') {
+            throw new PayException(PayException::PARAMS_INVALID, 'order_no 和 tenant_order_no 至少填写一个');
         }
 
-        return $this->http->post('/api/v1/pay/query', [
-            'tenant_order_no' => $tenantOrderNo,
-        ]);
+        $params = [];
+        if ($tenantOrderNo !== '') {
+            $params['tenant_order_no'] = $tenantOrderNo;
+        }
+        if ($orderNo !== '') {
+            $params['order_no'] = $orderNo;
+        }
+        if ($forceRemote) {
+            $params['force_remote'] = true;
+        }
+
+        return $this->http->post('/api/v1/pay/query', $params);
     }
 
     /**
      * 关闭订单（仅限待支付状态）
      *
-     * @param  string $tenantOrderNo  业务侧订单号
-     * @return array{}  关单成功返回空数组
+     * @param  string $tenantOrderNo  业务侧订单号（与 $orderNo 二选一）
+     * @param  string $orderNo        支付中心流水号（与 $tenantOrderNo 二选一）
+     * @return array  关单成功
      *
      * @throws PayException ORDER_NOT_FOUND       订单不存在
      * @throws PayException ORDER_STATUS_INVALID  订单状态不允许关闭
      */
-    public function close(string $tenantOrderNo): array
+    public function close(string $tenantOrderNo = '', string $orderNo = ''): array
     {
-        if ($tenantOrderNo === '') {
-            throw new PayException(PayException::PARAMS_INVALID, '业务订单号不能为空');
+        if ($tenantOrderNo === '' && $orderNo === '') {
+            throw new PayException(PayException::PARAMS_INVALID, 'order_no 和 tenant_order_no 至少填写一个');
         }
 
-        return $this->http->post('/api/v1/pay/close', [
-            'tenant_order_no' => $tenantOrderNo,
-        ]);
+        $params = [];
+        if ($tenantOrderNo !== '') {
+            $params['tenant_order_no'] = $tenantOrderNo;
+        }
+        if ($orderNo !== '') {
+            $params['order_no'] = $orderNo;
+        }
+
+        return $this->http->post('/api/v1/pay/close', $params);
     }
 }
