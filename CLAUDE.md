@@ -13,17 +13,16 @@ Jumaitong 支付中心 PHP SDK，供内部业务系统接入支付中心使用�
 
 ## 接口规范获取
 
-后端接口规范存放在私有仓库，每次开发接口调用代码前，先执行以下步骤获取最新规范：
+每次开发接口调用代码前，先执行以下命令获取 pay 最新接口文档：
 
-1. 请求以下 URL 获取 openapi.yaml：
-   - URL: https://api.github.com/repos/jumaitong/pay/contents/openapi.yaml
-   - Header: Authorization: Bearer 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
-2. 响应 JSON 中的 content 字段是 base64 编码的文件内容，解码后即为 openapi.yaml 的完整内容
-3. 根据解码后的 openapi.yaml 内容编写接口调用代码，严格遵循其中定义的：
-   - 接口路径和请求方法
-   - 请求参数结构
-   - 响应数据结构
-   - 字段名称和类型
+```bash
+curl -H "Authorization: token $GIT_JMT_TOKEN" \
+  https://raw.githubusercontent.com/jumaitong/pay/main/docs/API.md
+```
+
+`GIT_JMT_TOKEN` 从环境变量读取，不得硬编码。
+
+根据获取到的 API.md 内容编写接口调用代码，严格遵循其中定义的接口路径、请求方法、参数结构、响应结构和字段类型，不得凭记忆假设。
 
 ---
 
@@ -119,7 +118,7 @@ X-Sign: {hmac_sha256_signature}
 - **金额单位**：全部为「分」（整数），`PayApi::create()` 的 `$amount` 和退款金额均以分传入。
 - **业务订单号**：`tenantOrderNo` 最长 64 位，作为幂等键，同一订单号重复请求返回 `PAY_IN_PROGRESS` 或 `CONFLICT`。
 - **退款幂等**：`tenantRefundNo` 为可选的业务退款单号，传入时用于幂等保护。
-- **超时配置**：连接超时 5 秒，读取超时 10 秒（在 `HttpClient` 中硬编码，如需调整请修改该文件）。
+- **超时配置**：连接超时默认 5 秒，读取超时默认 10 秒，通过 `PayClient` 构造函数可覆盖。
 - **通知响应**：收到通知验签成功后，必须调用 `$client->notify()->success()` 并输出其返回值，支付中心收到 2xx 后停止重推。
 
 ---
