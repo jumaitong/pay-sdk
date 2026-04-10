@@ -13,7 +13,7 @@ Jumaitong 支付中心 PHP SDK，供内部业务系统接入支付中心使用�
 
 ## 接口规范获取
 
-每次开发接口调用代码前，先执行以下命令获取 pay 最新接口文档：
+每次开发接口调用代码前，先执行以下命令获取 Jumaitong 支付中心 最新接口文档：·
 
 ```bash
 curl -H "Authorization: token $GIT_JMT_TOKEN" \
