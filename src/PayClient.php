@@ -41,8 +41,10 @@ class PayClient
         string $apiKey,
         string $apiSecret,
         string $baseUrl,
+        int    $connectTimeout = 5,
+        int    $readTimeout    = 10,
     ) {
-        $this->http = new HttpClient($apiKey, $apiSecret, $baseUrl);
+        $this->http = new HttpClient($apiKey, $apiSecret, $baseUrl, $connectTimeout, $readTimeout);
     }
 
     /**

@@ -14,13 +14,12 @@ use Jumaitong\Pay\Exception\PayException;
  */
 class HttpClient
 {
-    private const CONNECT_TIMEOUT = 5;   // 连接超时（秒）
-    private const READ_TIMEOUT    = 10;  // 读取超时（秒）
-
     public function __construct(
         private readonly string $apiKey,
         private readonly string $apiSecret,
         private readonly string $baseUrl,
+        private readonly int    $connectTimeout = 5,
+        private readonly int    $readTimeout    = 10,
     ) {
         if (!str_starts_with($baseUrl, 'https://')) {
             throw new \InvalidArgumentException("baseUrl 必须使用 HTTPS，当前值: {$baseUrl}");
@@ -52,8 +51,8 @@ class HttpClient
                 CURLOPT_POST           => true,
                 CURLOPT_POSTFIELDS     => $body,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CONNECTTIMEOUT => self::CONNECT_TIMEOUT,
-                CURLOPT_TIMEOUT        => self::READ_TIMEOUT,
+                CURLOPT_CONNECTTIMEOUT => $this->connectTimeout,
+                CURLOPT_TIMEOUT        => $this->readTimeout,
                 CURLOPT_SSL_VERIFYPEER => true,
                 CURLOPT_SSL_VERIFYHOST => 2,
                 CURLOPT_HTTPHEADER     => [
