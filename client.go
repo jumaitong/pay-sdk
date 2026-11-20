@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -28,9 +28,9 @@ type Client struct {
 // New 创建客户端。baseURL 示例：https://pay.jumaitong.com
 func New(apiKey, apiSecret, baseURL string) *Client {
 	return &Client{
-		apiKey:    apiKey,
-		apiSecret: apiSecret,
-		baseURL:   baseURL,
+		apiKey:     apiKey,
+		apiSecret:  apiSecret,
+		baseURL:    baseURL,
 		httpClient: &http.Client{Timeout: defaultTimeout},
 	}
 }
@@ -48,7 +48,10 @@ func (c *Client) post(ctx context.Context, path string, req, resp any) error {
 	}
 
 	ts := strconv.FormatInt(time.Now().Unix(), 10)
-	nonce := randomHex(16)
+	nonce, err := randomHex(16)
+	if err != nil {
+		return fmt.Errorf("pay-sdk: generate nonce: %w", err)
+	}
 	sign := c.sign(ts, nonce, body)
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+path, bytes.NewReader(body))
@@ -104,8 +107,11 @@ func sha256Hex(b []byte) string {
 	return hex.EncodeToString(h[:])
 }
 
-func randomHex(n int) string {
+// randomHex 返回 n 个随机字节的十六进制串（密码学安全随机数）。
+func randomHex(n int) (string, error) {
 	b := make([]byte, n)
-	rand.Read(b) //nolint:gosec
-	return hex.EncodeToString(b)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }

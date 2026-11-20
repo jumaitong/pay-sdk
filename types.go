@@ -71,17 +71,17 @@ type RefundQueryReq struct {
 }
 
 type RefundQueryResp struct {
-	OutRefundNo        string `json:"out_refund_no"`
-	TenantRefundNo     string `json:"tenant_refund_no"`
-	ChannelRefundNo    string `json:"channel_refund_no"`
-	RefundAmount       int64  `json:"refund_amount"`
-	RefundAmountYuan   string `json:"refund_amount_yuan"`
-	Reason             string `json:"reason"`
-	Status             int    `json:"status"`
-	StatusLabel        string `json:"status_label"`
-	RefundedAt         string `json:"refunded_at"`
-	CreatedAt          string `json:"created_at"`
-	UpdatedAt          string `json:"updated_at"`
+	OutRefundNo      string `json:"out_refund_no"`
+	TenantRefundNo   string `json:"tenant_refund_no"`
+	ChannelRefundNo  string `json:"channel_refund_no"`
+	RefundAmount     int64  `json:"refund_amount"`
+	RefundAmountYuan string `json:"refund_amount_yuan"`
+	Reason           string `json:"reason"`
+	Status           int    `json:"status"`
+	StatusLabel      string `json:"status_label"`
+	RefundedAt       string `json:"refunded_at"`
+	CreatedAt        string `json:"created_at"`
+	UpdatedAt        string `json:"updated_at"`
 }
 
 // ---- Webhook ----
